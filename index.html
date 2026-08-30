@@ -2,6 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>VOID BREACH — FPS 3D</title>
 <style>
   :root{
@@ -312,7 +313,7 @@
   }
 
   /* ================= MOBILE / TOUCH ================= */
-  #mobileControls{display:none;position:fixed;inset:0;z-index:70;pointer-events:none;touch-action:none;}
+  #mobileControls{display:none;position:fixed;inset:0;z-index:200;pointer-events:none;touch-action:none;}
   .touch-stick{position:absolute;width:132px;height:132px;border:2px solid rgba(62,244,255,.45);border-radius:50%;
     background:radial-gradient(circle,rgba(62,244,255,.10),rgba(5,6,10,.28));pointer-events:auto;touch-action:none;}
   #moveStick{left:22px;bottom:30px;}
@@ -334,7 +335,8 @@
     padding:6px 12px;background:rgba(5,8,12,.85);border:1px solid rgba(62,244,255,.35);color:var(--plasma-cyan);
     font:10px 'Courier New';letter-spacing:2px;}
   .mobile-only-note{display:none;}
-  @media (max-width:700px),(pointer:coarse){
+  #mobileControls.mobile-force{display:block !important;}
+  @media (max-width:900px),(pointer:coarse){
     html,body{cursor:auto;touch-action:none;}
     #mobile-warning{display:none;}
     #mobileControls{display:block;}
@@ -899,37 +901,181 @@ function updateNetworkEnemies(dt){ /* host owns enemies; clients receive no enem
 
 /* Simple, lightweight drivable vehicle. It is isolated from the FPS loop and
    cannot break rendering if vehicle interaction is unavailable. */
-function createVehicle(){
-  const g=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.BoxGeometry(2.2,.55,4),new THREE.MeshStandardMaterial({color:0x18222e,metalness:.8,roughness:.22}));body.position.y=.65;g.add(body);
-  const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.65,.65,1.8),new THREE.MeshStandardMaterial({color:0x173746,metalness:.5,roughness:.18,transparent:true,opacity:.9}));cabin.position.set(0,1.08,-.15);g.add(cabin);
-  const wheelMat=new THREE.MeshStandardMaterial({color:0x090b10,roughness:.8});
-  [[-1.02,.42,-1.35],[1.02,.42,-1.35],[-1.02,.42,1.35],[1.02,.42,1.35]].forEach(q=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.28,16),wheelMat);w.rotation.z=Math.PI/2;w.position.set(...q);g.add(w);});
-  const glow=new THREE.PointLight(0x3ef4ff,.8,7);glow.position.set(0,.7,-2.2);g.add(glow);
-  g.position.set(7,.05,18);scene.add(g);return {group:g,speed:0,yaw:0};
+const CAR_STYLES = [
+  {name:'VOLT GT', color:0x18222e, accent:0x3ef4ff, scale:[1,1,1], maxSpeed:42, accel:12.5, turn:1.55},
+  {name:'RAPTOR X', color:0x25131c, accent:0xff2e6d, scale:[1.05,.92,1.08], maxSpeed:46, accel:13.5, turn:1.62},
+  {name:'TITAN SUV', color:0x20251a, accent:0xc8ff3e, scale:[1.16,1.08,1.02], maxSpeed:36, accel:10.5, turn:1.42},
+  {name:'PHANTOM', color:0x17191f, accent:0xffb020, scale:[.92,.88,1.14], maxSpeed:50, accel:14.5, turn:1.72}
+];
+let carStyleIndex = 0;
+const vehicleLookCamera=new THREE.PerspectiveCamera(68,1,0.1,500);
+let vehicleCamYaw=0;
+let vehicleCamPitch=-0.12;
+let vehicleCamDist=8.5;
+let vehicleCamHeight=3.0;
+let vehicleCamInitialized=false;
+function createVehicle(styleIndex=0, spawnX=7, spawnZ=18){
+  const s=CAR_STYLES[styleIndex%CAR_STYLES.length], g=new THREE.Group();
+  g.scale.set(...s.scale);
+  const bodyMat=new THREE.MeshStandardMaterial({color:s.color,metalness:.82,roughness:.2});
+  const glassMat=new THREE.MeshStandardMaterial({color:0x173746,metalness:.55,roughness:.15,transparent:true,opacity:.9});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2.25,.58,4.15),bodyMat); body.position.y=.65; g.add(body);
+  const hood=new THREE.Mesh(new THREE.BoxGeometry(2.05,.18,1.15),bodyMat); hood.position.set(0,.96,-1.35); g.add(hood);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.62,.68,1.9),glassMat); cabin.position.set(0,1.1,.05); g.add(cabin);
+  const bumperMat=new THREE.MeshStandardMaterial({color:s.accent,emissive:s.accent,emissiveIntensity:.28,metalness:.55,roughness:.25});
+  const front=new THREE.Mesh(new THREE.BoxGeometry(1.85,.12,.12),bumperMat); front.position.set(0,.58,-2.1); g.add(front);
+  const rear=new THREE.Mesh(new THREE.BoxGeometry(1.85,.1,.1),bumperMat); rear.position.set(0,.58,2.1); g.add(rear);
+  const wheelMat=new THREE.MeshStandardMaterial({color:0x090b10,roughness:.78,metalness:.1});
+  const wheelPos=[[-1.08,.43,-1.38],[1.08,.43,-1.38],[-1.08,.43,1.38],[1.08,.43,1.38]];
+  wheelPos.forEach(q=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.3,14),wheelMat);w.rotation.z=Math.PI/2;w.position.set(...q);g.add(w);});
+  const headMat=new THREE.MeshBasicMaterial({color:s.accent});
+  [-.68,.68].forEach(x=>{const h=new THREE.Mesh(new THREE.BoxGeometry(.35,.14,.08),headMat);h.position.set(x,.84,-2.12);g.add(h);});
+  const glow=new THREE.PointLight(s.accent,.65,7); glow.position.set(0,.75,-2.1); g.add(glow);
+  g.position.set(spawnX,.05,spawnZ); scene.add(g);
+  return {group:g,speed:0,yaw:0,maxSpeed:s.maxSpeed,accel:s.accel,turn:s.turn,halfW:1.25*s.scale[0],halfD:2.25*s.scale[2],style:s.name};
 }
-function ensureVehicle(){if(!cars.length)cars.push(createVehicle());}
+function ensureVehicle(){
+  if(!cars.length){
+    const spots=[[7,18],[-7,18],[18,7],[-18,7]];
+    for(let i=0;i<4;i++) cars.push(createVehicle(i,spots[i][0],spots[i][1]));
+  }
+}
 function toggleCar(){
-  if(!state||state!==GameState.PLAYING)return;
-  ensureVehicle();const car=cars[0];
-  if(activeCar){activeCar=null;document.getElementById('carHud').style.display='none';return;}
-  if(camera.position.distanceTo(car.group.position)<6){activeCar=car;document.getElementById('carHud').style.display='block';}
+  if(state!==GameState.PLAYING)return;
+  ensureVehicle();
+
+  if(activeCar){
+    // GTA-style exit: place the player safely beside the vehicle and restore FPS camera.
+    const sideX=Math.cos(activeCar.yaw)*2.8;
+    const sideZ=Math.sin(activeCar.yaw)*2.8;
+    camera.position.set(activeCar.group.position.x+sideX, player.height, activeCar.group.position.z+sideZ);
+    player.yaw=vehicleCamYaw;
+    player.pitch=vehicleCamPitch;
+    camera.rotation.order='YXZ';
+    camera.rotation.y=player.yaw;
+    camera.rotation.x=player.pitch;
+    camera.rotation.z=0;
+    activeCar.speed=0;
+    activeCar=null;
+    vehicleCamInitialized=false;
+    input.mouseDX=0; input.mouseDY=0;
+    document.getElementById('carHud').style.display='none';
+    return;
+  }
+
+  let best=null,bd=4.8;
+  for(const c of cars){
+    const d=Math.hypot(c.group.position.x-camera.position.x,c.group.position.z-camera.position.z);
+    if(d<bd){bd=d;best=c;}
+  }
+  if(best){
+    activeCar=best;
+    // Enter facing the current view, but keep the camera independently rotatable afterwards.
+    best.yaw=player.yaw;
+    best.group.rotation.y=best.yaw;
+    best.speed=0;
+    vehicleCamYaw=player.yaw;
+    vehicleCamPitch=Math.max(-0.35,Math.min(0.28,player.pitch));
+    vehicleCamInitialized=true;
+    input.forward=input.back=input.left=input.right=false;
+    input.mouseDX=0; input.mouseDY=0;
+    document.getElementById('carHud').style.display='block';
+  }
 }
-function updateCar(dt){
-  const car=activeCar;if(!car)return;
-  const throttle=(input.forward?1:0)-(input.back?1:0), steer=(input.right?1:0)-(input.left?1:0);
-  car.speed=THREE.MathUtils.lerp(car.speed,throttle*18,Math.min(1,dt*4));
-  car.yaw+=steer*dt*1.7*(Math.abs(car.speed)/18);
-  car.group.rotation.y=car.yaw;
-  car.group.position.x+=Math.sin(car.yaw)*car.speed*dt;
-  car.group.position.z+=Math.cos(car.yaw)*car.speed*dt;
-  car.group.position.x=THREE.MathUtils.clamp(car.group.position.x,-ARENA_SIZE+3,ARENA_SIZE-3);
-  car.group.position.z=THREE.MathUtils.clamp(car.group.position.z,-ARENA_SIZE+3,ARENA_SIZE-3);
-  camera.position.lerp(new THREE.Vector3(car.group.position.x,2.2,car.group.position.z+6),Math.min(1,dt*7));
-  camera.lookAt(car.group.position.x,1,car.group.position.z);
-  document.getElementById('carSpeed').textContent=Math.round(Math.abs(car.speed)*5.2);
+function carCollides(x,z,car){
+  // Conservative AABB collision. The vehicle is treated as a rounded box so it
+  // cannot tunnel through building corners even while turning at speed.
+  const radius=Math.hypot(car.halfW,car.halfD)*0.58;
+  for(const obs of obstacles){
+    if(obs.halfH<0.8) continue;
+    if(circleRectCollide(x,z,radius,obs)) return true;
+  }
+  return false;
 }
 
+function updateCar(dt){
+  const car=activeCar;
+  if(!car)return;
+
+  // Free-look camera while driving, exactly like an arcade third-person driving game.
+  const lookSensitivity=0.0024;
+  vehicleCamYaw -= input.mouseDX*lookSensitivity;
+  vehicleCamPitch -= input.mouseDY*lookSensitivity;
+  vehicleCamPitch=THREE.MathUtils.clamp(vehicleCamPitch,-0.52,0.42);
+  input.mouseDX=0; input.mouseDY=0;
+
+  const throttle=(input.forward?1:0)-(input.back?1:0);
+  const steer=(input.right?1:0)-(input.left?1:0);
+
+  // Fast automatic drivetrain with smooth acceleration/braking.
+  const forwardSpeed=car.maxSpeed;
+  const reverseSpeed=car.maxSpeed*0.34;
+  if(throttle>0){
+    const boost=car.accel*(car.speed<0?2.4:1.0);
+    car.speed=THREE.MathUtils.clamp(car.speed+boost*dt, -reverseSpeed, forwardSpeed);
+  }else if(throttle<0){
+    if(car.speed>0) car.speed=Math.max(0,car.speed-car.accel*3.2*dt);
+    else car.speed=THREE.MathUtils.clamp(car.speed-car.accel*0.75*dt,-reverseSpeed,forwardSpeed);
+  }else{
+    // GTA-ish rolling resistance: cars coast instead of stopping immediately.
+    const drag=car.speed>0?1.15:1.5;
+    if(car.speed>0) car.speed=Math.max(0,car.speed-drag*dt);
+    else if(car.speed<0) car.speed=Math.min(0,car.speed+drag*dt);
+  }
+
+  // Steering is tied to the car's heading, not the camera. This is the critical fix.
+  if(Math.abs(car.speed)>0.25 && steer!==0){
+    const speedRatio=Math.min(1,Math.abs(car.speed)/Math.max(1,car.maxSpeed));
+    const turnRate=car.turn*(0.35+1.15*speedRatio);
+    const reverse=car.speed<0?-1:1;
+    car.yaw += steer*reverse*turnRate*dt;
+  }
+  car.group.rotation.y=car.yaw;
+
+  // Move using the NEW heading in the same frame.
+  const forwardX=Math.sin(car.yaw);
+  const forwardZ=-Math.cos(car.yaw);
+  const travel=car.speed*dt;
+  const nx=car.group.position.x+forwardX*travel;
+  const nz=car.group.position.z+forwardZ*travel;
+  if(!carCollides(nx,nz,car)){
+    car.group.position.x=nx;
+    car.group.position.z=nz;
+  }else{
+    // Try each axis separately so the car slides along walls instead of locking up.
+    let moved=false;
+    if(!carCollides(nx,car.group.position.z,car)) { car.group.position.x=nx; moved=true; }
+    if(!carCollides(car.group.position.x,nz,car)) { car.group.position.z=nz; moved=true; }
+    if(!moved) car.speed*=0.35;
+  }
+
+  const bound=ARENA_SIZE-4.0;
+  car.group.position.x=THREE.MathUtils.clamp(car.group.position.x,-bound,bound);
+  car.group.position.z=THREE.MathUtils.clamp(car.group.position.z,-bound,bound);
+
+  // Camera orbits independently around the vehicle, so the player can look/shoot sideways.
+  const camForwardX=Math.sin(vehicleCamYaw);
+  const camForwardZ=-Math.cos(vehicleCamYaw);
+  const target=new THREE.Vector3(
+    car.group.position.x+camForwardX*1.6,
+    car.group.position.y+1.05,
+    car.group.position.z+camForwardZ*1.6
+  );
+  const desiredX=target.x-camForwardX*vehicleCamDist;
+  const desiredY=target.y-vehicleCamPitch*3.2+vehicleCamHeight*0.25;
+  const desiredZ=target.z-camForwardZ*vehicleCamDist;
+  const camSmooth=1-Math.pow(0.001,dt);
+  camera.position.x=THREE.MathUtils.lerp(camera.position.x,desiredX,camSmooth);
+  camera.position.y=THREE.MathUtils.lerp(camera.position.y,desiredY,camSmooth);
+  camera.position.z=THREE.MathUtils.lerp(camera.position.z,desiredZ,camSmooth);
+  camera.lookAt(target);
+  camera.rotation.z=0;
+
+  // Keep player orientation useful for network state, but NEVER overwrite free-look.
+  player.yaw=vehicleCamYaw;
+  player.pitch=vehicleCamPitch;
+  document.getElementById('carSpeed').textContent=Math.round(Math.abs(car.speed)*3.6);
+}
 function difficultyFromTeamSize(n){
   // scala morbida: ogni operatore extra nella stanza aumenta la minaccia,
   // così la sfida per-persona resta simile anche in squadra numerosa.
@@ -1059,10 +1205,11 @@ function init(){
 
   camera = new THREE.PerspectiveCamera(78, window.innerWidth/window.innerHeight, 0.1, 500);
 
-  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias: !isMobile(), powerPreference:'high-performance'});
+  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias: !isMobile(), powerPreference:'high-performance', precision:isMobile()?'mediump':'highp'});
+  renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile()?1.35:1.75));
-  renderer.shadowMap.enabled = !isMobile();
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile()?0.85:1.35));
+  renderer.shadowMap.enabled = !isMobile() && window.innerWidth > 900;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   clock = new THREE.Clock();
@@ -1099,7 +1246,7 @@ function buildLighting(){
   const key = new THREE.DirectionalLight(0x8fb8ff, 0.7);
   key.position.set(20, 35, -10);
   key.castShadow = true;
-  key.shadow.mapSize.set(isMobile()?1024:1536,isMobile()?1024:1536);
+  key.shadow.mapSize.set(isMobile()?512:1024,isMobile()?512:1024);
   key.shadow.camera.left=-40; key.shadow.camera.right=40;
   key.shadow.camera.top=40; key.shadow.camera.bottom=-40;
   key.shadow.camera.far=120;
@@ -1107,10 +1254,10 @@ function buildLighting(){
 
   // accent point lights, magenta/cyan pulses around arena
   const accentColors = [0xff2e6d, 0x3ef4ff, 0xc8ff3e, 0xffb020];
-  for(let i=0;i<(isMobile()?4:8);i++){
+  for(let i=0;i<(isMobile()?2:6);i++){
     const angle = (i/8)*Math.PI*2;
     const r = 24;
-    const light = new THREE.PointLight(accentColors[i%accentColors.length], 1.4, 22, 2);
+    const light = new THREE.PointLight(accentColors[i%accentColors.length], isMobile()?0.75:1.15, isMobile()?15:22, 2);
     light.position.set(Math.cos(angle)*r, 3.5, Math.sin(angle)*r);
     light.userData.baseIntensity = 1.4;
     light.userData.pulseOffset = Math.random()*Math.PI*2;
@@ -1132,7 +1279,7 @@ function loadMap(mapId){
 
   const def = MAPS[mapId] || MAPS.arena;
   ARENA_SIZE = def.size;
-  scene.fog.density = mapId==='city' ? 0.019 : 0.028;
+  scene.fog.density = isMobile() ? (mapId==='city' ? 0.026 : 0.034) : (mapId==='city' ? 0.019 : 0.028);
 
   if(mapId==='city') buildCityMap();
   else buildArenaMap();
@@ -1377,7 +1524,7 @@ function buildCityMap(){
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8), new THREE.MeshBasicMaterial({color:lampColor}));
       bulb.position.set(offX, 4.15, offZ);
       scene.add(bulb); mapDecor.push(bulb);
-      const light = new THREE.PointLight(lampColor, 1, 12, 2);
+      const light = new THREE.PointLight(lampColor, isMobile()?0.0:0.65, 10, 2);
       light.position.copy(bulb.position);
       scene.add(light); mapDecor.push(light);
     });
@@ -2487,6 +2634,15 @@ function updateComboTimer(dt){
 /* =========================================================================
    GAME FLOW
    ========================================================================= */
+function syncMobileControls(){
+  const root=document.getElementById('mobileControls');
+  if(!root)return;
+  const mobile=isMobile();
+  root.classList.toggle('mobile-force',mobile);
+  root.style.display=mobile?'block':'none';
+}
+window.addEventListener('orientationchange',()=>setTimeout(()=>{syncMobileControls();onResize();},80));
+window.addEventListener('pageshow',syncMobileControls);
 function startGame(){
   document.getElementById('lobbyRoot').classList.add('hidden');
   document.getElementById('gameOverMenu').classList.add('hidden');
@@ -2540,6 +2696,9 @@ function startGame(){
   document.getElementById('mission-map-label').textContent = MAPS[session.mapId].name;
 
   state = GameState.PLAYING;
+  syncMobileControls();
+  // Never inherit a network/lobby camera transform: every client starts upright and facing forward.
+  camera.rotation.order='YXZ'; camera.rotation.x=0; camera.rotation.z=0; camera.rotation.y=player.yaw;
   if(!isMobile()) document.getElementById('gameCanvas').requestPointerLock();
 
   if(!net.client) startWave(1);
@@ -2597,7 +2756,8 @@ document.querySelectorAll('.lobby-back').forEach(btn=>{
 /* ---------------- schermata principale: 3 modalità ---------------- */
 document.getElementById('card-solo').addEventListener('click', ()=>{
   session.isRoom = false;
-  buildMapGrid('mapGridSolo', 'arena');
+  syncMobileControls();
+buildMapGrid('mapGridSolo', 'arena');
   showLobbyScreen('screen-solo-setup');
 });
 document.getElementById('card-host').addEventListener('click', ()=>{
@@ -2845,7 +3005,7 @@ document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
     const move=document.getElementById('moveStick'), knob=move.querySelector('.stick-knob');
     let moveId=null, lookId=null, lx=0,ly=0;
     function moveStart(e){const t=e.changedTouches[0];moveId=t.identifier;const r=move.getBoundingClientRect();lx=r.left+r.width/2;ly=r.top+r.height/2;moveUpdate(t);}
-    function moveUpdate(t){if(moveId===null)return; const dx=t.clientX-lx,dy=t.clientY-ly;const m=42;const d=Math.min(m,Math.hypot(dx,dy));const a=Math.atan2(dy,dx);const x=Math.cos(a)*d,y=Math.sin(a)*d;knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`;input.left=x<-10;input.right=x>10;input.forward=y<-10;input.back=y>10;}
+    function moveUpdate(t){if(moveId===null)return; const r=move.getBoundingClientRect(); const dx=t.clientX-(r.left+r.width/2),dy=t.clientY-(r.top+r.height/2);const m=42;const d=Math.min(m,Math.hypot(dx,dy));const a=Math.atan2(dy,dx);const x=Math.cos(a)*d,y=Math.sin(a)*d;knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`;input.left=x<-10;input.right=x>10;input.forward=y<-10;input.back=y>10;}
     function moveEnd(e){for(const t of e.changedTouches)if(t.identifier===moveId){moveId=null;input.left=input.right=input.forward=input.back=false;knob.style.transform='translate(-50%,-50%)';}}
     move.addEventListener('touchstart',e=>{e.preventDefault();moveStart(e)},{passive:false});
     move.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)moveUpdate(t)},{passive:false});
@@ -2863,6 +3023,7 @@ document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
   })();
 
 // inizializza la griglia mappe della missione solitaria all'avvio pagina
+syncMobileControls();
 buildMapGrid('mapGridSolo', 'arena');
 refreshSoloDiffUI();
 
@@ -2923,6 +3084,7 @@ function animate(){
 }
 
 init();
+syncMobileControls();
 
 })();
 </script>
