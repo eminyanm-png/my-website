@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -20,7 +19,7 @@
     font-family:'Courier New',monospace;
     cursor:none;
   }
-  #gameCanvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;}
+  #gameCanvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;touch-action:none;}
 
   /* ---------- crosshair ---------- */
   #crosshair{
@@ -311,6 +310,63 @@
     display:flex;align-items:center;gap:10px;padding:10px 16px;margin-bottom:24px;
     background:rgba(62,244,255,0.05);border-left:2px solid var(--plasma-cyan);font-size:11px;color:var(--steel);letter-spacing:0.5px;line-height:1.6;max-width:640px;
   }
+
+  /* ================= MOBILE / TOUCH ================= */
+  #mobileControls{display:none;position:fixed;inset:0;z-index:70;pointer-events:none;touch-action:none;}
+  .touch-stick{position:absolute;width:132px;height:132px;border:2px solid rgba(62,244,255,.45);border-radius:50%;
+    background:radial-gradient(circle,rgba(62,244,255,.10),rgba(5,6,10,.28));pointer-events:auto;touch-action:none;}
+  #moveStick{left:22px;bottom:30px;}
+  #lookZone{right:0;top:0;width:58%;height:72%;pointer-events:auto;}
+  .stick-knob{position:absolute;width:54px;height:54px;left:50%;top:50%;transform:translate(-50%,-50%);
+    border-radius:50%;background:linear-gradient(135deg,rgba(62,244,255,.55),rgba(255,46,109,.35));
+    border:1px solid rgba(255,255,255,.5);box-shadow:0 0 20px rgba(62,244,255,.22);}
+  .touch-btn{position:absolute;width:68px;height:68px;border-radius:50%;pointer-events:auto;touch-action:none;
+    border:1px solid rgba(255,255,255,.32);background:rgba(8,12,20,.72);color:#fff;font:700 11px 'Courier New';
+    letter-spacing:1px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(62,244,255,.12);}
+  #fireTouch{right:24px;bottom:42px;width:86px;height:86px;border-color:rgba(255,46,109,.65);background:rgba(255,46,109,.13);}
+  #reloadTouch{right:120px;bottom:34px;}
+  #driveTouch{right:24px;bottom:142px;border-color:rgba(200,255,62,.65);background:rgba(200,255,62,.10);}
+  #jumpTouch{right:118px;bottom:130px;}
+  #carHud{display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:45;
+    padding:8px 18px;border:1px solid rgba(200,255,62,.5);background:rgba(5,8,12,.78);color:var(--toxic-lime);
+    font-size:11px;letter-spacing:2px;pointer-events:none;}
+  #networkStatus{position:fixed;top:8px;right:50%;transform:translateX(50%);z-index:115;display:none;
+    padding:6px 12px;background:rgba(5,8,12,.85);border:1px solid rgba(62,244,255,.35);color:var(--plasma-cyan);
+    font:10px 'Courier New';letter-spacing:2px;}
+  .mobile-only-note{display:none;}
+  @media (max-width:700px),(pointer:coarse){
+    html,body{cursor:auto;touch-action:none;}
+    #mobile-warning{display:none;}
+    #mobileControls{display:block;}
+    #crosshair{width:22px;height:22px;}
+    #health-panel{left:12px;bottom:12px;width:185px;padding:10px 12px;}
+    #ammo-panel{right:12px;bottom:12px;padding:10px 14px;}
+    #ammo-count{font-size:30px;}
+    #score-panel{top:12px;left:12px;padding:8px 12px;}
+    #score-val{font-size:20px;}
+    #wave-panel{top:12px;padding:7px 14px;max-width:190px;}
+    #squad-panel{top:55px;left:12px;width:175px;}
+    .hud-panel{backdrop-filter:blur(2px);}
+    .lobby-screen{padding:18px;overflow:auto;justify-content:center;}
+    #screen-main .lobby-title-big{font-size:34px;letter-spacing:6px;}
+    #screen-main .lobby-subtitle-big{font-size:9px;letter-spacing:3px;margin-bottom:25px;text-align:center;}
+    .mode-grid{flex-direction:column;gap:12px;width:min(92vw,430px);}
+    .mode-card{width:100%;padding:20px;}
+    .info-strip{font-size:9px;max-width:92vw !important;margin-top:18px !important;}
+    .room-panel{width:min(94vw,640px);padding:24px 18px;max-height:88vh;overflow:auto;}
+    .map-grid{flex-direction:column;width:min(94vw,420px);gap:12px;}
+    .map-card{width:100%;}
+    .map-preview{height:100px;}
+    .section-heading{font-size:10px;letter-spacing:3px;}
+    .section-sub{font-size:10px;margin-bottom:18px;}
+    .lobby-topbar{padding:12px 14px;}
+    .lobby-logo{font-size:14px;}
+    .lobby-back{font-size:9px;padding:7px 10px;}
+    .panel-box{max-width:92vw;padding:30px 20px;}
+    .glitch-title{font-size:34px;}
+    #stats-row{gap:22px;}
+    .mobile-only-note{display:block;color:var(--steel);font-size:9px;letter-spacing:1px;margin-top:10px;}
+  }
 </style>
 </head>
 <body>
@@ -371,6 +427,16 @@
 </div>
 
 <div id="mobile-warning">Miglior esperienza su desktop con mouse e tastiera</div>
+<div id="networkStatus"></div>
+<div id="carHud">VEICOLO · <span id="carSpeed">0</span> KM/H · TAP GUIDA PER USCIRE</div>
+<div id="mobileControls">
+  <div id="moveStick" class="touch-stick"><div class="stick-knob"></div></div>
+  <div id="lookZone"></div>
+  <div id="fireTouch" class="touch-btn">FUOCO</div>
+  <div id="reloadTouch" class="touch-btn">R</div>
+  <div id="jumpTouch" class="touch-btn">SALTA</div>
+  <div id="driveTouch" class="touch-btn">GUIDA</div>
+</div>
 
 <!-- ================= LOBBY ================= -->
 <div id="lobbyRoot">
@@ -558,6 +624,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -690,6 +757,178 @@ const session = {
   soloDifficulty: 2,      // 1..5, usato solo in missione solitaria
   players: [],            // [{name, isHost, ready, bot}]
 };
+  const net = {
+    peer:null, host:false, connected:false, connections:new Map(), hostConn:null,
+    id:'', roomId:'', lastBroadcast:0, lastInputSend:0, remotePlayers:new Map(),
+    networkEnemies:new Map(), client:false, started:false
+  };
+  const isMobile = () => window.matchMedia('(pointer:coarse)').matches || window.innerWidth <= 700;
+
+
+
+/* =========================================================================
+   ONLINE ROOM CORE — kept deliberately defensive so a network failure can
+   never stop the local game render loop.
+   ========================================================================= */
+function netStatus(msg){
+  const el=document.getElementById('networkStatus');
+  if(!el) return;
+  el.textContent=msg;
+  el.style.display='block';
+  clearTimeout(netStatus._t);
+  netStatus._t=setTimeout(()=>el.style.display='none',2600);
+}
+function serialPlayer(p){
+  return {name:p.name,isHost:!!p.isHost,ready:!!p.ready,netId:p.netId||null,bot:false};
+}
+function sendLobbyState(){
+  if(!net.host) return;
+  const payload={type:'lobby',roomName:session.roomName,mapId:session.mapId,maxSlots:session.maxSlots||6,players:session.players.map(serialPlayer)};
+  net.connections.forEach(c=>{try{if(c.open)c.send(payload);}catch(e){}});
+  renderPlayerSlots();
+}
+function setupHostConnection(conn){
+  net.connections.set(conn.peer,conn);
+  conn.on('open',()=>{
+    if(session.players.length >= (session.maxSlots||6)){try{conn.send({type:'full'});conn.close();}catch(e){}return;}
+    conn.send({type:'lobby',roomName:session.roomName,mapId:session.mapId,maxSlots:session.maxSlots||6,players:session.players.map(serialPlayer)});
+  });
+  conn.on('data',data=>{
+    if(!data||typeof data!=='object')return;
+    if(data.type==='join'){
+      const old=session.players.find(p=>p.netId===conn.peer);
+      if(!old && session.players.length < (session.maxSlots||6)){
+        session.players.push({name:String(data.name||'Operatore').slice(0,18),isHost:false,ready:false,bot:false,netId:conn.peer});
+        session.teamSize=session.players.length;
+        sendLobbyState();
+      }
+    } else if(data.type==='ready'){
+      const p=session.players.find(x=>x.netId===conn.peer); if(p){p.ready=!!data.ready;sendLobbyState();}
+    } else if(data.type==='state'){
+      const p=session.players.find(x=>x.netId===conn.peer);
+      if(p){p.x=Number(data.x)||0;p.y=Number(data.y)||0;p.z=Number(data.z)||0;p.yaw=Number(data.yaw)||0;}
+    } else if(data.type==='started'){
+      // reserved for future authoritative events
+    }
+  });
+  conn.on('close',()=>{
+    net.connections.delete(conn.peer);
+    session.players=session.players.filter(p=>p.netId!==conn.peer);
+    session.teamSize=Math.max(1,session.players.length);
+    sendLobbyState();
+  });
+  conn.on('error',()=>{});
+}
+function initHostRoom(){
+  if(typeof Peer==='undefined'){netStatus('SERVER ONLINE NON DISPONIBILE');return;}
+  try{
+    net.host=true;net.client=false;net.connected=false;net.roomId=session.roomCode;
+    net.peer=new Peer(session.roomCode);
+    net.peer.on('open',id=>{net.id=id;net.connected=true;netStatus('STANZA ONLINE · '+id);sendLobbyState();});
+    net.peer.on('connection',setupHostConnection);
+    net.peer.on('error',err=>{console.warn('PeerJS host',err);netStatus('CONNESSIONE NON DISPONIBILE');});
+    net.peer.on('disconnected',()=>{net.connected=false;});
+  }catch(e){console.error(e);netStatus('ERRORE STANZA');}
+}
+function initJoinRoom(code,name){
+  if(typeof Peer==='undefined'){netStatus('SERVER ONLINE NON DISPONIBILE');return;}
+  try{
+    net.host=false;net.client=true;net.roomId=code;net.peer=new Peer();
+    net.peer.on('open',id=>{
+      net.id=id;
+      const c=net.peer.connect(code,{reliable:true});
+      net.hostConn=c;
+      c.on('open',()=>{net.connected=true;c.send({type:'join',name});netStatus('CONNESSO ALLA STANZA');});
+      c.on('data',data=>{
+        if(!data||typeof data!=='object')return;
+        if(data.type==='lobby'){
+          session.roomName=data.roomName||('Stanza '+code);session.mapId=data.mapId||'arena';
+          session.maxSlots=data.maxSlots||6;session.players=Array.isArray(data.players)?data.players:[];
+          session.teamSize=session.players.length||1;renderPlayerSlots();refreshWaitDiffPreview();
+        } else if(data.type==='start'){
+          session.mapId=data.mapId||session.mapId;session.teamSize=data.teamSize||session.players.length||1;
+          startGame();
+        } else if(data.type==='world') applyNetworkWorld(data);
+      });
+      c.on('close',()=>{net.connected=false;netStatus('HOST DISCONNESSO');});
+      c.on('error',()=>netStatus('ERRORE CONNESSIONE'));
+    });
+    net.peer.on('error',err=>{console.warn('PeerJS client',err);netStatus('STANZA NON TROVATA');});
+  }catch(e){console.error(e);netStatus('ERRORE CONNESSIONE');}
+}
+function startNetworkGame(){
+  if(!net.host){return;}
+  session.teamSize=session.players.length||1;
+  net.connections.forEach(c=>{try{if(c.open)c.send({type:'start',mapId:session.mapId,teamSize:session.teamSize});}catch(e){}});
+  startGame();
+}
+function sendLocalState(dt){
+  if(!net.client||!net.hostConn||!net.hostConn.open||state!==GameState.PLAYING)return;
+  net.lastInputSend-=dt;
+  if(net.lastInputSend<=0){
+    net.lastInputSend=.06;
+    try{net.hostConn.send({type:'state',x:camera.position.x,y:camera.position.y,z:camera.position.z,yaw:player.yaw});}catch(e){}
+  }
+}
+function broadcastWorld(){
+  if(!net.host)return;
+  const remote=session.players.filter(p=>!p.isHost&&p.netId).map(p=>({id:p.netId,x:p.x||0,y:p.y||player.height,z:p.z||0,yaw:p.yaw||0,name:p.name}));
+  const world={type:'world',players:remote};
+  net.connections.forEach(c=>{try{if(c.open)c.send(world);}catch(e){}});
+}
+function applyNetworkWorld(data){
+  if(!Array.isArray(data.players))return;
+  data.players.forEach(p=>{
+    let rp=net.remotePlayers.get(p.id);
+    if(!rp){
+      const g=new THREE.Group();
+      const body=new THREE.Mesh(new THREE.BoxGeometry(.65,1.25,.4),new THREE.MeshStandardMaterial({color:0x3ef4ff,roughness:.55,metalness:.35}));
+      body.position.y=.8;g.add(body);scene.add(g);
+      rp={group:g,target:new THREE.Vector3(),yaw:0};net.remotePlayers.set(p.id,rp);
+    }
+    rp.target.set(p.x,p.y,p.z);rp.yaw=p.yaw||0;
+  });
+}
+function updateNetworkPlayers(dt){
+  if(!net.remotePlayers)return;
+  net.remotePlayers.forEach((rp,id)=>{
+    rp.group.position.lerp(rp.target,Math.min(1,dt*12));rp.group.rotation.y=rp.yaw;
+  });
+}
+function updateNetworkEnemies(dt){ /* host owns enemies; clients receive no enemy simulation yet */ }
+
+/* Simple, lightweight drivable vehicle. It is isolated from the FPS loop and
+   cannot break rendering if vehicle interaction is unavailable. */
+function createVehicle(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2.2,.55,4),new THREE.MeshStandardMaterial({color:0x18222e,metalness:.8,roughness:.22}));body.position.y=.65;g.add(body);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.65,.65,1.8),new THREE.MeshStandardMaterial({color:0x173746,metalness:.5,roughness:.18,transparent:true,opacity:.9}));cabin.position.set(0,1.08,-.15);g.add(cabin);
+  const wheelMat=new THREE.MeshStandardMaterial({color:0x090b10,roughness:.8});
+  [[-1.02,.42,-1.35],[1.02,.42,-1.35],[-1.02,.42,1.35],[1.02,.42,1.35]].forEach(q=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.28,16),wheelMat);w.rotation.z=Math.PI/2;w.position.set(...q);g.add(w);});
+  const glow=new THREE.PointLight(0x3ef4ff,.8,7);glow.position.set(0,.7,-2.2);g.add(glow);
+  g.position.set(7,.05,18);scene.add(g);return {group:g,speed:0,yaw:0};
+}
+function ensureVehicle(){if(!cars.length)cars.push(createVehicle());}
+function toggleCar(){
+  if(!state||state!==GameState.PLAYING)return;
+  ensureVehicle();const car=cars[0];
+  if(activeCar){activeCar=null;document.getElementById('carHud').style.display='none';return;}
+  if(camera.position.distanceTo(car.group.position)<6){activeCar=car;document.getElementById('carHud').style.display='block';}
+}
+function updateCar(dt){
+  const car=activeCar;if(!car)return;
+  const throttle=(input.forward?1:0)-(input.back?1:0), steer=(input.right?1:0)-(input.left?1:0);
+  car.speed=THREE.MathUtils.lerp(car.speed,throttle*18,Math.min(1,dt*4));
+  car.yaw+=steer*dt*1.7*(Math.abs(car.speed)/18);
+  car.group.rotation.y=car.yaw;
+  car.group.position.x+=Math.sin(car.yaw)*car.speed*dt;
+  car.group.position.z+=Math.cos(car.yaw)*car.speed*dt;
+  car.group.position.x=THREE.MathUtils.clamp(car.group.position.x,-ARENA_SIZE+3,ARENA_SIZE-3);
+  car.group.position.z=THREE.MathUtils.clamp(car.group.position.z,-ARENA_SIZE+3,ARENA_SIZE-3);
+  camera.position.lerp(new THREE.Vector3(car.group.position.x,2.2,car.group.position.z+6),Math.min(1,dt*7));
+  camera.lookAt(car.group.position.x,1,car.group.position.z);
+  document.getElementById('carSpeed').textContent=Math.round(Math.abs(car.speed)*5.2);
+}
 
 function difficultyFromTeamSize(n){
   // scala morbida: ogni operatore extra nella stanza aumenta la minaccia,
@@ -721,6 +960,9 @@ const MAPS = {
 
 /* ---------------- bot alleati (compagni di squadra simulati) ---------------- */
 let allies = [];
+  let cars = [];
+  let activeCar = null;
+  let carPromptTimer = 0;
 
 /* ---------------- weapons ---------------- */
 const WEAPONS = [
@@ -761,6 +1003,7 @@ window.addEventListener('keydown', e=>{
     case 'Digit1': switchWeapon(0); break;
     case 'Digit2': switchWeapon(1); break;
     case 'Digit3': switchWeapon(2); break;
+    case 'KeyE': toggleCar(); break;
     case 'Escape': pauseGame(); break;
   }
 });
@@ -794,7 +1037,7 @@ document.addEventListener('mouseup', e=>{
 renderer_domElementClickHandler();
 function renderer_domElementClickHandler(){
   document.getElementById('gameCanvas').addEventListener('click', ()=>{
-    if(state===GameState.PLAYING && document.pointerLockElement!==document.getElementById('gameCanvas')){
+    if(state===GameState.PLAYING && !isMobile() && document.pointerLockElement!==document.getElementById('gameCanvas')){
       document.getElementById('gameCanvas').requestPointerLock();
     }
   });
@@ -816,10 +1059,10 @@ function init(){
 
   camera = new THREE.PerspectiveCamera(78, window.innerWidth/window.innerHeight, 0.1, 500);
 
-  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias:true});
+  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias: !isMobile(), powerPreference:'high-performance'});
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.shadowMap.enabled = true;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile()?1.35:1.75));
+  renderer.shadowMap.enabled = !isMobile();
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   clock = new THREE.Clock();
@@ -856,7 +1099,7 @@ function buildLighting(){
   const key = new THREE.DirectionalLight(0x8fb8ff, 0.7);
   key.position.set(20, 35, -10);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048,2048);
+  key.shadow.mapSize.set(isMobile()?1024:1536,isMobile()?1024:1536);
   key.shadow.camera.left=-40; key.shadow.camera.right=40;
   key.shadow.camera.top=40; key.shadow.camera.bottom=-40;
   key.shadow.camera.far=120;
@@ -864,7 +1107,7 @@ function buildLighting(){
 
   // accent point lights, magenta/cyan pulses around arena
   const accentColors = [0xff2e6d, 0x3ef4ff, 0xc8ff3e, 0xffb020];
-  for(let i=0;i<8;i++){
+  for(let i=0;i<(isMobile()?4:8);i++){
     const angle = (i/8)*Math.PI*2;
     const r = 24;
     const light = new THREE.PointLight(accentColors[i%accentColors.length], 1.4, 22, 2);
@@ -893,6 +1136,7 @@ function loadMap(mapId){
 
   if(mapId==='city') buildCityMap();
   else buildArenaMap();
+  cars.length=0; activeCar=null; ensureVehicle();
 }
 const mapDecor = []; // mesh extra da ripulire al cambio mappa (non incluso in obstacles/floatingDebris)
 
@@ -1244,7 +1488,7 @@ function updateCameraLook(dt){
   const sensitivity = 0.0022;
   player.yaw -= input.mouseDX * sensitivity;
   player.pitch -= input.mouseDY * sensitivity;
-  player.pitch = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, player.pitch));
+  player.pitch = Math.max(-0.95, Math.min(0.78, player.pitch));
   input.mouseDX = 0; input.mouseDY = 0;
 
   camera.rotation.order='YXZ';
@@ -2257,6 +2501,10 @@ function startGame(){
   allies.forEach(a=>scene.remove(a.group)); allies=[];
 
   // difficoltà attiva: dal numero di operatori nella stanza, oppure dal livello scelto in missione solo
+  activeCar=null;
+  document.getElementById('carHud').style.display='none';
+  net.networkEnemies.forEach(e=>scene.remove(e.group)); net.networkEnemies.clear();
+
   activeDifficulty = session.isRoom
     ? difficultyFromTeamSize(session.teamSize)
     : difficultyFromSoloLevel(session.soloDifficulty);
@@ -2273,9 +2521,10 @@ function startGame(){
   resetPlayer();
   updateScoreUI(); updateComboUI(); updateWeaponUI();
 
-  // spawna un compagno bot per ogni operatore extra nella stanza (tu escluso)
+  // Solo la vecchia modalità locale usa bot. In una stanza online i giocatori reali
+  // vengono visualizzati tramite WebRTC.
   const squadPanel = document.getElementById('squad-panel');
-  if(session.isRoom && session.teamSize > 1){
+  if(!net.connected && session.isRoom && session.teamSize > 1){
     const botNames = session.players.filter(p=>p.bot).map(p=>p.name);
     botNames.forEach((name,i)=>{
       const angle = (i/botNames.length)*Math.PI*2;
@@ -2291,9 +2540,10 @@ function startGame(){
   document.getElementById('mission-map-label').textContent = MAPS[session.mapId].name;
 
   state = GameState.PLAYING;
-  document.getElementById('gameCanvas').requestPointerLock();
+  if(!isMobile()) document.getElementById('gameCanvas').requestPointerLock();
 
-  startWave(1);
+  if(!net.client) startWave(1);
+  if(net.connected) net.started=true;
 }
 
 function pauseGame(){
@@ -2338,7 +2588,10 @@ function showLobbyScreen(id){
   document.getElementById(id).classList.remove('hidden');
 }
 document.querySelectorAll('.lobby-back').forEach(btn=>{
-  btn.addEventListener('click', ()=>showLobbyScreen(btn.dataset.back));
+  btn.addEventListener('click', ()=>{
+    if(net.connected){try{if(net.hostConn)net.hostConn.close();}catch(e){};try{if(net.peer)net.peer.destroy();}catch(e){}}
+    net.connected=false;net.host=false;net.client=false;showLobbyScreen(btn.dataset.back);
+  });
 });
 
 /* ---------------- schermata principale: 3 modalità ---------------- */
@@ -2470,59 +2723,41 @@ document.getElementById('createRoomBtn').addEventListener('click', ()=>{
 
   session.isRoom = true;
   session.mapId = hostSelectedMap;
-  session.teamSize = hostSlots;
+  session.maxSlots = hostSlots;
+  session.teamSize = 1;
   session.hostName = hostName;
   session.roomName = roomName;
   session.roomCode = generateRoomCode();
-
-  session.players = [{name:hostName, isHost:true, ready:true, bot:false}];
-  const shuffledBots = [...botCallsigns].sort(()=>Math.random()-0.5);
-  for(let i=1;i<hostSlots;i++){
-    session.players.push({name:shuffledBots[i-1]||('Operatore '+i), isHost:false, ready:false, bot:true});
-  }
-
+  session.players = [{name:hostName,isHost:true,ready:true,bot:false,netId:null}];
   enterRoomWaitScreen();
+  initHostRoom();
 });
 
 /* ---------------- unisciti a stanza ---------------- */
 document.getElementById('joinRoomBtn').addEventListener('click', ()=>{
   const joinName = document.getElementById('joinNameInput').value.trim() || 'Vipera';
-  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase() || generateRoomCode();
-
-  // simulazione: genera una stanza locale con qualche compagno bot, come spiegato nell'info-strip
-  const simulatedSlots = 2 + Math.floor(Math.random()*3); // 3-5 operatori totali
-  session.isRoom = true;
-  session.mapId = Math.random()>0.5 ? 'city' : 'arena';
-  session.teamSize = simulatedSlots;
-  session.hostName = 'Host_'+code.slice(0,3);
-  session.roomName = 'Stanza '+code;
-  session.roomCode = code;
-
-  session.players = [{name:session.hostName, isHost:true, ready:true, bot:true}];
-  const shuffledBots = [...botCallsigns].sort(()=>Math.random()-0.5);
-  for(let i=1;i<simulatedSlots-1;i++){
-    session.players.push({name:shuffledBots[i-1]||('Operatore '+i), isHost:false, ready:Math.random()>0.4, bot:true});
-  }
-  session.players.push({name:joinName, isHost:false, ready:false, bot:false}); // tu, l'ultimo slot
-
-  enterRoomWaitScreen();
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){netStatus('INSERISCI UN CODICE STANZA VALIDO');return;}
+  session.isRoom=true;session.roomCode=code;session.teamSize=1;session.players=[{name:joinName,isHost:false,ready:false,bot:false}];
+  enterRoomWaitScreen();initJoinRoom(code,joinName);
 });
 
 /* ---------------- sala d'attesa: lista giocatori, ready check, avvio ---------------- */
 let localReady = false;
 function enterRoomWaitScreen(){
-  localReady = session.players.find(p=>!p.bot)?.isHost ?? false; // l'host locale parte già pronto
+  localReady = net.host; // l'host parte già pronto
   document.getElementById('roomCodeDisplay').textContent = session.roomCode;
   document.getElementById('roomWaitTitle').textContent = session.roomName;
   document.getElementById('roomWaitMapLabel').textContent = MAPS[session.mapId].name + ' · ' + session.teamSize + ' operatori';
   refreshWaitDiffPreview();
   renderPlayerSlots();
   refreshReadyBtn();
+  document.getElementById('launchMissionBtn').textContent=net.host?'Avvia Missione':'Pronto';
   showLobbyScreen('screen-room-wait');
 }
 
 function refreshWaitDiffPreview(){
-  const d = difficultyFromTeamSize(session.teamSize);
+  const d = difficultyFromTeamSize(session.isRoom ? Math.max(1,session.teamSize) : session.teamSize);
   document.getElementById('wdpHp').textContent = Math.round(d.hpMult*100)+'%';
   document.getElementById('wdpCount').textContent = Math.round(d.countMult*100)+'%';
   document.getElementById('wdpDmg').textContent = Math.round(d.dmgMult*100)+'%';
@@ -2532,7 +2767,7 @@ function renderPlayerSlots(){
   const list = document.getElementById('playerSlotList');
   list.innerHTML = '';
   session.players.forEach(p=>{
-    const localMe = !p.bot;
+    const localMe = net.host ? p.isHost : (p.netId===net.peerId || (!p.netId && !p.isHost));
     const isReady = localMe ? localReady : p.ready;
     const slot = document.createElement('div');
     slot.className = 'player-slot' + (p.isHost ? ' host' : '');
@@ -2559,6 +2794,10 @@ function refreshReadyBtn(){
 
 document.getElementById('readyToggleBtn').addEventListener('click', ()=>{
   localReady = !localReady;
+  const me=session.players.find(p=>net.host?p.isHost:(p.netId===net.peerId || !p.netId));
+  if(me)me.ready=localReady;
+  if(net.client&&net.hostConn&&net.hostConn.open)net.hostConn.send({type:'ready',ready:localReady});
+  if(net.host)sendLobbyState();
   refreshReadyBtn();
   renderPlayerSlots();
 });
@@ -2576,10 +2815,16 @@ setInterval(()=>{
 }, 1400);
 
 document.getElementById('launchMissionBtn').addEventListener('click', ()=>{
-  // aggiorna lo stato ready locale nell'array players prima di lanciare
-  const me = session.players.find(p=>!p.bot);
-  if(me) me.ready = localReady;
-  startGame();
+  const me=session.players.find(p=>net.host?p.isHost:(p.netId===net.peerId || !p.netId));
+  if(me)me.ready=true;localReady=true;refreshReadyBtn();renderPlayerSlots();
+  if(net.host){
+    session.teamSize=session.players.length;
+    sendLobbyState();
+    startNetworkGame();
+  }else if(net.hostConn&&net.hostConn.open){
+    net.hostConn.send({type:'ready',ready:true});
+    netStatus('PRONTO · ATTENDO L\'HOST');
+  }
 });
 
 document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
@@ -2592,6 +2837,30 @@ document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
   btn.textContent = 'Copiato!';
   setTimeout(()=>{ btn.textContent = original; }, 1200);
 });
+
+
+  /* ================= TOUCH CONTROLS ================= */
+  (function setupTouch(){
+    const root=document.getElementById('mobileControls');
+    const move=document.getElementById('moveStick'), knob=move.querySelector('.stick-knob');
+    let moveId=null, lookId=null, lx=0,ly=0;
+    function moveStart(e){const t=e.changedTouches[0];moveId=t.identifier;const r=move.getBoundingClientRect();lx=r.left+r.width/2;ly=r.top+r.height/2;moveUpdate(t);}
+    function moveUpdate(t){if(moveId===null)return; const dx=t.clientX-lx,dy=t.clientY-ly;const m=42;const d=Math.min(m,Math.hypot(dx,dy));const a=Math.atan2(dy,dx);const x=Math.cos(a)*d,y=Math.sin(a)*d;knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`;input.left=x<-10;input.right=x>10;input.forward=y<-10;input.back=y>10;}
+    function moveEnd(e){for(const t of e.changedTouches)if(t.identifier===moveId){moveId=null;input.left=input.right=input.forward=input.back=false;knob.style.transform='translate(-50%,-50%)';}}
+    move.addEventListener('touchstart',e=>{e.preventDefault();moveStart(e)},{passive:false});
+    move.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)moveUpdate(t)},{passive:false});
+    move.addEventListener('touchend',moveEnd,{passive:false}); move.addEventListener('touchcancel',moveEnd,{passive:false});
+    const look=document.getElementById('lookZone');
+    look.addEventListener('touchstart',e=>{e.preventDefault();lookId=e.changedTouches[0].identifier;const t=e.changedTouches[0];lx=t.clientX;ly=t.clientY;},{passive:false});
+    look.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===lookId){input.mouseDX+=(t.clientX-lx)*1.35;input.mouseDY+=(t.clientY-ly)*1.35;lx=t.clientX;ly=t.clientY;}},{passive:false});
+    look.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===lookId)lookId=null;},{passive:false});
+    const hold=(id,down,up)=>{const el=document.getElementById(id);el.addEventListener('touchstart',e=>{e.preventDefault();down();},{passive:false});['touchend','touchcancel'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();up&&up();},{passive:false}));};
+    hold('fireTouch',()=>input.firing=true,()=>input.firing=false);
+    hold('reloadTouch',()=>startReload());
+    hold('jumpTouch',()=>input.jump=true,()=>input.jump=false);
+    hold('driveTouch',()=>toggleCar());
+    root.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+  })();
 
 // inizializza la griglia mappe della missione solitaria all'avvio pagina
 buildMapGrid('mapGridSolo', 'arena');
@@ -2621,14 +2890,29 @@ function animate(){
   }
 
   if(state===GameState.PLAYING){
-    updateCameraLook(dt);
-    updatePlayerMovement(dt);
+    if(activeCar) updateCar(dt);
+    else {
+      updateCameraLook(dt);
+      updatePlayerMovement(dt);
+    }
+    if(net.connected){
+      if(net.host){
+        const me=session.players.find(p=>p.isHost);
+        if(me){me.x=camera.position.x;me.z=camera.position.z;me.yaw=player.yaw;}
+        net.lastBroadcast-=dt;
+        if(net.lastBroadcast<=0){net.lastBroadcast=.09;broadcastWorld();}
+      }else sendLocalState(dt);
+    }
     tryFire(dt);
     updateReload(dt);
-    updateProjectiles(dt);
-    updateEnemies(dt);
-    updateAllies(dt);
-    updatePickups(dt);
+    if(!net.client){
+      updateProjectiles(dt);
+      updateEnemies(dt);
+      updateAllies(dt);
+      updatePickups(dt);
+    }
+    updateNetworkPlayers(dt);
+    updateNetworkEnemies(dt);
     updateParticles(dt);
     updateComboTimer(dt);
 
